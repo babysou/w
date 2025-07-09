@@ -31,7 +31,6 @@ def save_votes(votes):
         json.dump(votes, f, ensure_ascii=False, indent=2)
 
 def get_client_id():
-    # simple client id basé sur cookie, ou générer un nouveau
     client_id = request.cookies.get('client_id')
     if not client_id:
         client_id = str(uuid.uuid4())
@@ -48,7 +47,7 @@ def songs():
         song = {
             'Titre': s.get('Titre', 'Titre inconnu'),
             'Artiste': s.get('Artiste', 'Artiste inconnu'),
-            'Lien': s.get('URL', '#'),  # <-- correction ICI exactement
+            'Lien': s.get('URL', '#'), 
             'Extrait': s.get('Extrait') or None
         }
         key = f"{song['Artiste']}|{song['Titre']}"
@@ -73,7 +72,7 @@ def songs():
 def vote():
     artist = request.form.get('artist')
     title = request.form.get('title')
-    action = request.form.get('action')  # 'like' ou 'dislike'
+    action = request.form.get('action') 
     if not artist or not title or action not in ['like', 'dislike']:
         return jsonify({'error': 'Paramètres invalides'}), 400
 
@@ -97,12 +96,10 @@ def vote():
 
     save_votes(votes)
     response = jsonify({'votes': votes[key]['count']})
-    # renvoyer aussi cookie client_id si absent
     if not request.cookies.get('client_id'):
         response.set_cookie('client_id', client_id, max_age=60*60*24*365*5)
     return response
 
-# Route statique pour logo etc.
 @app.route('/static/<path:path>')
 def send_static(path):
     return send_from_directory('static', path)
