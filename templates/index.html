@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projet M - Vote</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #e0c3fc, #8ec5fc, #ffafbd);
+      margin: 0;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo-img {
+      width: 90px;
+      border-radius: 50%;
+      opacity: 0.85;
+      transition: opacity 0.3s;
+    }
+
+    .logo-img:hover {
+      opacity: 1;
+    }
+
+    h1 {
+      color: #4b0082;
+      font-size: 2rem;
+      text-shadow: 0 2px 4px rgba(255,255,255,0.6);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      max-width: 1300px;
+      margin: 0 auto;
+      gap: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0 6px 18px rgba(75, 0, 130, 0.2);
+      padding: 1.5rem;
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .song-title {
+      font-weight: bold;
+      color: #4b0082;
+      font-size: 1.3rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .song-artist {
+      color: #5a189a;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .song-link {
+      color: #720026;
+      text-decoration: none;
+      font-size: 1rem;
+    }
+
+    .song-link:hover {
+      text-decoration: underline;
+      color: #d90429;
+    }
+
+    audio {
+      margin: 1rem 0;
+      width: 100%;
+    }
+
+    .vote-section {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .vote-btn {
+      background: #8a2be2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.4rem;
+      padding: 0.4rem 0.7rem;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .vote-btn:hover {
+      background: #4b0082;
+      transform: scale(1.08);
+    }
+
+    .vote-btn.liked {
+      background: #e91e63;
+    }
+
+    .vote-count {
+      font-weight: bold;
+      color: #6a0572;
+      font-size: 1rem;
+      margin-left: auto;
+    }
+
+    #top7 {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 260px;
+      background: rgba(255,255,255,0.95);
+      padding: 1rem;
+      box-shadow: 0 4px 16px rgba(75,0,130,0.2);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+    }
+
+    #top7 h3 {
+      margin-top: 0;
+      color: #4b0082;
+      border-bottom: 2px solid #ffafbd;
+      padding-bottom: 0.5rem;
+    }
+
+    #top7 ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    #top7 li {
+      padding: 0.4rem 0;
+      border-bottom: 1px solid #f0e6f6;
+      color: #4b0082;
+      font-weight: 500;
+    }
+
+    @media (max-width: 600px) {
+      #top7 {
+        position: static;
+        width: 100%;
+        margin-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="/static/logo.jpg" class="logo-img" alt="Logo">
+  <h1>Projet M - Vote tes chansons favorites</h1>
+</header>
+
+<div class="grid" id="song-list"></div>
+
+<div id="top7">
+  <h3>Top 7 chansons 🎶</h3>
+  <ul></ul>
+</div>
+
+<script>
+const songList = document.getElementById('song-list');
+let songs = [];
+
+function renderSongs() {
+  songList.innerHTML = '';
+  songs.forEach((song, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    const liked = song.user_voted ? 'liked' : '';
+    div.innerHTML = `
+      <div>
+        <div class="song-title">${song.Titre}</div>
+        <div class="song-artist">${song.Artiste}</div>
+        <a href="${song.Lien}" target="_blank" class="song-link">🎧 Écouter sur YouTube</a>
+        ${song.Extrait ? `<audio controls src="${song.Extrait}"></audio>` : ''}
+      </div>
+      <div class="vote-section">
+        <button class="vote-btn ${liked}" data-index="${i}" data-action="like">❤️</button>
+        <button class="vote-btn" data-index="${i}" data-action="dislike">❌</button>
+        <span class="vote-count">${song.votes}</span>
+      </div>
+    `;
+    songList.appendChild(div);
+  });
+}
+
+function updateTop7() {
+  const top7List = document.querySelector('#top7 ul');
+  top7List.innerHTML = '';
+  const sorted = [...songs].sort((a,b) => b.votes - a.votes).slice(0,7);
+  sorted.forEach(song => {
+    const li = document.createElement('li');
+    li.textContent = `${song.Artiste} – ${song.Titre} (${song.votes})`;
+    top7List.appendChild(li);
+  });
+}
+
+function voteHandler(e) {
+  const btn = e.target.closest('button.vote-btn');
+  if (!btn) return;
+  const index = btn.dataset.index;
+  const action = btn.dataset.action;
+  const song = songs[index];
+
+  fetch('/vote', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: `artist=${encodeURIComponent(song.Artiste)}&title=${encodeURIComponent(song.Titre)}&action=${action}`
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.votes !== undefined) {
+      song.votes = data.votes;
+      song.user_voted = (action === 'like');
+      renderSongs();
+      updateTop7();
+    } else alert('Erreur serveur');
+  })
+  .catch(() => alert('Erreur réseau'));
+}
+
+songList.addEventListener('click', voteHandler);
+
+fetch('/songs')
+  .then(r => r.json())
+  .then(data => {
+    songs = data;
+    renderSongs();
+    updateTop7();
+  })
+  .catch(() => alert('Erreur chargement chansons.'));
+</script>
+</body>
+</html>
